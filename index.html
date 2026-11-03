@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catálogo de Postagens - Vue.js via CDN</title>
+  
+  <!-- Importação do Vue 3 oficial via CDN (sem necessidade de Node.js) -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      background-color: #f4f6f8;
+      color: #2d3748;
+    }
+    .container {
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    header {
+      margin-bottom: 2rem;
+    }
+    h1 {
+      margin-bottom: 0.5rem;
+      color: #1a202c;
+    }
+    .subtitulo {
+      margin-top: 0;
+      color: #718096;
+      font-size: 0.95rem;
+    }
+    .search-bar {
+      width: 100%;
+      padding: 0.85rem 1rem;
+      border: 1px solid #cbd5e0;
+      border-radius: 8px;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .search-bar:focus {
+      border-color: #42b883;
+      box-shadow: 0 0 0 3px rgba(66, 184, 131, 0.2);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.25rem;
+    }
+    .card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 1.25rem;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      border-color: #42b883;
+    }
+    .card-id {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #42b883;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+    .card h3 {
+      margin: 0 0 0.75rem 0;
+      text-transform: capitalize;
+      font-size: 1.1rem;
+      color: #2d3748;
+      line-height: 1.4;
+    }
+    .card p {
+      margin: 0;
+      font-size: 0.9rem;
+      color: #718096;
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .card-footer {
+      margin-top: 1rem;
+      font-size: 0.85rem;
+      color: #42b883;
+      font-weight: 600;
+    }
+    .status-msg {
+      font-size: 1.1rem;
+      color: #4a5568;
+    }
+    .erro {
+      color: #e53e3e;
+    }
+
+    /* Modal de Detalhamento */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1rem;
+      z-index: 100;
+    }
+    .modal-content {
+      background: #ffffff;
+      border-radius: 10px;
+      max-width: 550px;
+      width: 100%;
+      padding: 2rem;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+    }
+    .modal-content h2 {
+      margin-top: 0;
+      text-transform: capitalize;
+      color: #1a202c;
+    }
+    .modal-content p {
+      color: #4a5568;
+      line-height: 1.6;
+    }
+    .modal-meta {
+      background-color: #f7fafc;
+      padding: 0.75rem;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+      font-size: 0.85rem;
+      color: #718096;
+    }
+    .btn-fechar {
+      background-color: #42b883;
+      color: #ffffff;
+      border: none;
+      padding: 0.6rem 1.25rem;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 1rem;
+      transition: background-color 0.2s;
+    }
+    .btn-fechar:hover {
+      background-color: #33a06f;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="app" class="container">
+    <header>
+      <h1>Catálogo de Postagens</h1>
+      <p class="subtitulo">Demonstração de integração assíncrona com API pública e Vue.js 3</p>
+      
+      <input 
+        v-model="termoBusca" 
+        type="text" 
+        class="search-bar" 
+        placeholder="Filtrar por palavras no título..."
+      >
+    </header>
+
+    <!-- Estados de requisição -->
+    <p v-if="carregando" class="status-msg">Carregando dados da API...</p>
+    <p v-else-if="erro" class="status-msg erro">{{ erro }}</p>
+
+    <!-- Listagem dinâmica de cards -->
+    <section v-else class="grid">
+      <article 
+        v-for="post in itensFiltrados" 
+        :key="post.id" 
+        class="card"
+        @click="abrirDetalhes(post)"
+      >
+        <div>
+          <span class="card-id">Registro #{{ post.id }}</span>
+          <h3>{{ post.title }}</h3>
+          <p>{{ post.body }}</p>
+        </div>
+        <div class="card-footer">
+          Clique para ver detalhes &rarr;
+        </div>
+      </article>
+
+      <p v-if="itensFiltrados.length === 0">Nenhum resultado encontrado para o termo pesquisado.</p>
+    </section>
+
+    <!-- Janela modal de detalhamento -->
+    <div v-if="postSelecionado" class="modal-overlay" @click.self="fecharDetalhes">
+      <div class="modal-content">
+        <div class="modal-meta">
+          <strong>Identificador do Item:</strong> #{{ postSelecionado.id }} | 
+          <strong>Código do Autor:</strong> Usuário {{ postSelecionado.userId }}
+        </div>
+        <h2>{{ postSelecionado.title }}</h2>
+        <p>{{ postSelecionado.body }}</p>
+        <button class="btn-fechar" @click="fecharDetalhes">Fechar Detalhes</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const { createApp, ref, computed, onMounted } = Vue;
+
+    createApp({
+      setup() {
+        const postagens = ref([]);
+        const termoBusca = ref('');
+        const carregando = ref(true);
+        const erro = ref(null);
+        const postSelecionado = ref(null);
+
+        // Requisição assíncrona com fetch nativo
+        const buscarDados = async () => {
+          try {
+            const res = await fetch('https://jsonplaceholder.typicode.com/posts?_limit=12');
+            if (!res.ok) throw new Error('Falha ao comunicar com o servidor.');
+            postagens.value = await res.json();
+          } catch (err) {
+            erro.value = 'Não foi possível carregar os dados da API pública.';
+          } finally {
+            carregando.value = false;
+          }
+        };
+
+        // Filtro reativo em tempo real via computed property
+        const itensFiltrados = computed(() => {
+          return postagens.value.filter(post => 
+            post.title.toLowerCase().includes(termoBusca.value.toLowerCase())
+          );
+        });
+
+        // Controle do modal de detalhamento
+        const abrirDetalhes = (post) => {
+          postSelecionado.value = post;
+        };
+
+        const fecharDetalhes = () => {
+          postSelecionado.value = null;
+        };
+
+        onMounted(() => {
+          buscarDados();
+        });
+
+        return {
+          termoBusca,
+          carregando,
+          erro,
+          itensFiltrados,
+          postSelecionado,
+          abrirDetalhes,
+          fecharDetalhes
+        };
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>
