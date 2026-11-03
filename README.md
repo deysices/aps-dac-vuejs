@@ -22,4 +22,4 @@ Catálogo dinâmico de postagens que consome a API pública REST **JSONPlacehold
 Por utilizar a distribuição oficial do Vue.js 3 via CDN, a execução dispensa etapas de compilação ou instalação de pacotes locais:
 1. Clone este repositório:
    ```bash
-   git clone [https://github.com/SEU_USUARIO/aps-dac-vuejs.git](https://github.com/SEU_USUARIO/aps-dac-vuejs.git)
+   git clone [https://github.com/deysices/aps-dac-vuejs.git](https://github.com/deysices/aps-dac-vuejs.git)
